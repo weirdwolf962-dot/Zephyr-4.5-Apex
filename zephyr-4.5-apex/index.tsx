@@ -41,7 +41,7 @@ const LoadingScreen = () => (
   <div className="bg-white dark:bg-zinc-950 h-screen flex items-center justify-center font-sans overflow-hidden">
     <div className="loading-container z-10">
       <div className="logo-text">Zephyr</div>
-      <div className="credit-text flex items-center justify-center gap-2 flex-nowrap whitespace-nowrap opacity-75">
+      <div className="credit-text flex items-center justify-center gap-2">
         <span className="by-text text-xs sm:text-sm opacity-70">engineered by</span><span className="company-text text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-bold tracking-wide">Quantum Coders</span>
       </div>
     </div>
