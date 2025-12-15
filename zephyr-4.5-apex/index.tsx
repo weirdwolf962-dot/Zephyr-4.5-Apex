@@ -106,8 +106,7 @@ const LoadingScreen = () => (
     <div className="loading-container z-10">
       <div className="logo-text">Zephyr</div>
       <div className="credit-text flex items-center justify-center gap-2">
-        <span className="by-text">engineered by</span> 
-        <span className="company-text text-zinc-900 dark:text-zinc-100 font-bold tracking-wide">Quantum Coders</span>
+        <span className="by-text text-xs sm:text-sm opacity-70">engineered by</span><span className="company-text text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-bold tracking-wide"> Quantum Coders</span>
       </div>
     </div>
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-100/40 via-transparent to-transparent dark:from-blue-900/10 dark:via-transparent dark:to-transparent pointer-events-none"></div>
