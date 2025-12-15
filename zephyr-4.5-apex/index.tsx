@@ -11,6 +11,66 @@ declare global {
   interface Window {
     SpeechRecognition: any;
     webkitSpeechRecognition: any;
+    copyCode: (encodedCode: string, btn: HTMLElement) => void;
+  }
+}
+
+// --- Markdown Configuration ---
+if (typeof window !== 'undefined') {
+  // Global function to handle code copying from markdown blocks
+  window.copyCode = async (encodedCode: string, btn: HTMLElement) => {
+    try {
+      const code = decodeURIComponent(encodedCode);
+      await navigator.clipboard.writeText(code);
+      
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        <span class="text-green-500">Copied!</span>
+      `;
+      
+      setTimeout(() => {
+        btn.innerHTML = originalHtml;
+      }, 2000);
+    } catch (err) {
+      console.error('Failed to copy code:', err);
+    }
+  };
+
+  // Configure marked with a custom renderer for code blocks
+  if (typeof marked !== 'undefined') {
+    const renderer = new marked.Renderer();
+    renderer.code = (code: string, language: string) => {
+      // Escape HTML entities to prevent injection in the display area
+      const escapedCode = code.replace(/&/g, '&amp;')
+                              .replace(/</g, '&lt;')
+                              .replace(/>/g, '&gt;');
+      
+      // Encode code for the onclick attribute
+      const encodedCode = encodeURIComponent(code);
+      const langLabel = language || 'Code';
+
+      // Returns a styled code block with a header bar containing the language and copy button
+      return `
+        <div class="my-4 rounded-xl overflow-hidden bg-[#1e1e1e] border border-zinc-800 shadow-md">
+          <div class="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-zinc-700">
+            <span class="text-xs font-mono text-zinc-400 select-none">${langLabel}</span>
+            <button 
+              onclick="window.copyCode('${encodedCode}', this)"
+              class="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-2 py-1 rounded select-none"
+              title="Copy code"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              Copy
+            </button>
+          </div>
+          <div class="p-4 overflow-x-auto">
+            <pre><code class="text-sm font-mono text-zinc-300 ${language ? 'language-' + language : ''}">${escapedCode}</code></pre>
+          </div>
+        </div>
+      `;
+    };
+    marked.use({ renderer });
   }
 }
 
@@ -28,11 +88,14 @@ const Icons = {
   Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2 2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>,
   Bot: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 5 20 5 4 19 20 19"></polyline></svg>,
   User: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
-  Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M20 4l-1 2-2 1 2 1 1 2 1-2 2-1-2-1z"/></svg>,
+  Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/><path d="M20 4l-1 2-2 1 2 1 1 2 1-2 2-1-2-1z"/></svg>,
   Newspaper: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>,
   Beaker: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>,
   Terminal: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>,
   Feather: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>,
+  Copy: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>,
+  Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
+  CodeCopy: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>,
 };
 
 // --- Components ---
@@ -42,12 +105,76 @@ const LoadingScreen = () => (
     <div className="loading-container z-10">
       <div className="logo-text">Zephyr</div>
       <div className="credit-text flex items-center justify-center gap-2">
-        <span className="by-text text-xs sm:text-sm opacity-70">engineered by</span><span className="company-text text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-bold tracking-wide">Quantum Coders</span>
+        <span className="by-text">engineered by</span> 
+        <span className="company-text text-zinc-900 dark:text-zinc-100 font-bold tracking-wide">Quantum Coders</span>
       </div>
     </div>
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-100/40 via-transparent to-transparent dark:from-blue-900/10 dark:via-transparent dark:to-transparent pointer-events-none"></div>
   </div>
 );
+
+// Helper to extract code from markdown
+const extractCode = (text: string) => {
+    const codeBlockRegex = /```(?:\w+)?\s*([\s\S]*?)```/g;
+    let matches = [];
+    let match;
+    while ((match = codeBlockRegex.exec(text)) !== null) {
+        matches.push(match[1].trim());
+    }
+    return matches.length > 0 ? matches.join('\n\n') : null;
+};
+
+const CopyButton = ({ text }: { text: string }) => {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  return (
+    <button 
+      onClick={handleCopy}
+      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+      title="Copy to clipboard"
+    >
+      {isCopied ? <Icons.Check /> : <Icons.Copy />}
+    </button>
+  );
+};
+
+const CopyAgentCodeButton = ({ text }: { text: string }) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const code = extractCode(text);
+
+  if (!code) return null;
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy code: ', err);
+    }
+  };
+
+  return (
+    <button 
+      onClick={handleCopy}
+      className="p-1.5 rounded-md text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 flex items-center gap-1.5"
+      title="Copy all code"
+    >
+      {isCopied ? <Icons.Check /> : <Icons.CodeCopy />}
+      <span className="text-[10px] font-medium">Copy Code</span>
+    </button>
+  );
+};
 
 const HistorySidebar = ({ isOpen, onClose, history, onLoadChat, onDeleteChat, onNewChat }: {
     isOpen: boolean;
@@ -643,16 +770,28 @@ const App = () => {
                                 )}
                             </div>
                             
-                            {/* Sources */}
-                            {msg.sources && msg.sources.length > 0 && (
-                                <div className="mt-2 ml-1 flex flex-wrap gap-2">
-                                    {msg.sources.map((source, i) => (
-                                        <a key={i} href={source.uri} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors border border-zinc-200 dark:border-zinc-700">
-                                            <span className="truncate max-w-[150px]">{source.title}</span>
-                                        </a>
-                                    ))}
-                                </div>
-                            )}
+                            {/* Sources and Actions */}
+                            <div className={`flex items-center gap-2 mt-1 ${msg.role === Role.USER ? 'justify-end' : 'justify-start'} w-full`}>
+                                {msg.sources && msg.sources.length > 0 && (
+                                    <div className="flex flex-wrap gap-2">
+                                        {msg.sources.map((source, i) => (
+                                            <a key={i} href={source.uri} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors border border-zinc-200 dark:border-zinc-700">
+                                                <span className="truncate max-w-[150px]">{source.title}</span>
+                                            </a>
+                                        ))}
+                                    </div>
+                                )}
+                                
+                                {msg.text && (
+                                    <div className="mt-1 flex items-center gap-2">
+                                      <CopyButton text={msg.text} />
+                                      {msg.agentName === 'Coder Agent' && (
+                                        <CopyAgentCodeButton text={msg.text} />
+                                      )}
+                                    </div>
+                                )}
+                            </div>
+
                         </div>
                     </div>
                 ))}
