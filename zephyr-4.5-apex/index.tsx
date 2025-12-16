@@ -773,7 +773,7 @@ const App = () => {
                             <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                          </svg>
                     </div>
-                </div>                </div>
+                </div>                
                 <h2 className="text-2xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-zinc-800 to-zinc-500 dark:from-zinc-100 dark:to-zinc-400">
                     How can I help you today?
                 </h2>
