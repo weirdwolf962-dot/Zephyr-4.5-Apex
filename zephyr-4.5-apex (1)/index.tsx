@@ -581,8 +581,18 @@ const App = () => {
         }
     }
 
+    // API Key Validation
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+        const errorMessage: Message = { role: Role.MODEL, text: "Error: API Key is missing. Please check your deployment settings and ensure GEMINI_API_KEY is set." };
+        setMessages([...newMessages, errorMessage]);
+        setLoading(false);
+        setProcessingAgent(null);
+        return;
+    }
+
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey: apiKey });
 
         const historyForAPI = messages.map(msg => {
             const parts: any[] = [{ text: msg.text }];
@@ -655,9 +665,19 @@ const App = () => {
         };
         setMessages([...newMessages, modelMessage]);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error calling Gemini API:", error);
-        const errorMessage: Message = { role: Role.MODEL, text: "Sorry, I'm having trouble connecting to the AI service. Please try again later." };
+        let errorText = "Sorry, I'm having trouble connecting to the AI service. Please try again later.";
+        
+        if (error.message) {
+            if (error.message.includes('API key')) {
+                 errorText = "Error: Invalid API Key. Please check your deployment settings.";
+            } else {
+                 errorText = `Connection Error: ${error.message}`;
+            }
+        }
+        
+        const errorMessage: Message = { role: Role.MODEL, text: errorText };
         setMessages([...newMessages, errorMessage]);
     } finally {
         setLoading(false);
