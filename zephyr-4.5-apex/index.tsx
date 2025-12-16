@@ -582,7 +582,9 @@ const App = () => {
     }
 
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({
+         apiKey: import.meta.env.GEMINI_API_KEY,
+        });
 
         const historyForAPI = messages.map(msg => {
             const parts: any[] = [{ text: msg.text }];
