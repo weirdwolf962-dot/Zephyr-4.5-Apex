@@ -11,66 +11,6 @@ declare global {
   interface Window {
     SpeechRecognition: any;
     webkitSpeechRecognition: any;
-    copyCode: (encodedCode: string, btn: HTMLElement) => void;
-  }
-}
-
-// --- Markdown Configuration ---
-if (typeof window !== 'undefined') {
-  // Global function to handle code copying from markdown blocks
-  window.copyCode = async (encodedCode: string, btn: HTMLElement) => {
-    try {
-      const code = decodeURIComponent(encodedCode);
-      await navigator.clipboard.writeText(code);
-      
-      const originalHtml = btn.innerHTML;
-      btn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-500"><polyline points="20 6 9 17 4 12"></polyline></svg>
-        <span class="text-green-500">Copied!</span>
-      `;
-      
-      setTimeout(() => {
-        btn.innerHTML = originalHtml;
-      }, 2000);
-    } catch (err) {
-      console.error('Failed to copy code:', err);
-    }
-  };
-
-  // Configure marked with a custom renderer for code blocks
-  if (typeof marked !== 'undefined') {
-    const renderer = new marked.Renderer();
-    renderer.code = (code: string, language: string) => {
-      // Escape HTML entities to prevent injection in the display area
-      const escapedCode = code.replace(/&/g, '&amp;')
-                              .replace(/</g, '&lt;')
-                              .replace(/>/g, '&gt;');
-      
-      // Encode code for the onclick attribute
-      const encodedCode = encodeURIComponent(code);
-      const langLabel = language || 'Code';
-
-      // Returns a styled code block with a header bar containing the language and copy button
-      return `
-        <div class="my-4 rounded-xl overflow-hidden bg-[#1e1e1e] border border-zinc-800 shadow-md">
-          <div class="flex items-center justify-between px-4 py-2 bg-[#2d2d2d] border-b border-zinc-700">
-            <span class="text-xs font-mono text-zinc-400 select-none">${langLabel}</span>
-            <button 
-              onclick="window.copyCode('${encodedCode}', this)"
-              class="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-2 py-1 rounded select-none"
-              title="Copy code"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-              Copy
-            </button>
-          </div>
-          <div class="p-4 overflow-x-auto">
-            <pre><code class="text-sm font-mono text-zinc-300 ${language ? 'language-' + language : ''}">${escapedCode}</code></pre>
-          </div>
-        </div>
-      `;
-    };
-    marked.use({ renderer });
   }
 }
 
@@ -88,16 +28,11 @@ const Icons = {
   Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2 2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>,
   Bot: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 5 20 5 4 19 20 19"></polyline></svg>,
   User: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>,
-  Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2z"/><circle cx="18" cy="6" r="1.5"/></svg>,
+  Sparkles: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L12 3Z"/></svg>,
   Newspaper: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6Z"/></svg>,
   Beaker: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/></svg>,
   Terminal: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>,
   Feather: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"></path><line x1="16" y1="8" x2="2" y2="22"></line><line x1="17.5" y1="15" x2="9" y2="15"></line></svg>,
-  Copy: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>,
-  Check: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
-  CodeCopy: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>,
-  Download: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>,
-  Search: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>,
 };
 
 // --- Components ---
@@ -107,113 +42,13 @@ const LoadingScreen = () => (
     <div className="loading-container z-10">
       <div className="logo-text">Zephyr</div>
       <div className="credit-text flex items-center justify-center gap-2">
-        <span className="by-text text-xs sm:text-sm opacity-70">engineered by</span><span className="company-text text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-bold tracking-wide">Quantum Coders</span>
+        <span className="by-text">engineered by</span> 
+        <span className="company-text text-zinc-900 dark:text-zinc-100 font-bold tracking-wide">Quantum Coders</span>
       </div>
     </div>
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-100/40 via-transparent to-transparent dark:from-blue-900/10 dark:via-transparent dark:to-transparent pointer-events-none"></div>
   </div>
 );
-
-// Helper to extract code from markdown
-const extractCode = (text: string) => {
-    const codeBlockRegex = /```(?:\w+)?\s*([\s\S]*?)```/g;
-    let matches = [];
-    let match;
-    while ((match = codeBlockRegex.exec(text)) !== null) {
-        matches.push(match[1].trim());
-    }
-    return matches.length > 0 ? matches.join('\n\n') : null;
-};
-
-const CopyButton = ({ text }: { text: string }) => {
-  const [isCopied, setIsCopied] = useState(false);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy text: ', err);
-    }
-  };
-
-  return (
-    <button 
-      onClick={handleCopy}
-      className="p-1.5 rounded-md text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-      title="Copy to clipboard"
-    >
-      {isCopied ? <Icons.Check /> : <Icons.Copy />}
-    </button>
-  );
-};
-
-const CopyAgentCodeButton = ({ text }: { text: string }) => {
-  const [isCopied, setIsCopied] = useState(false);
-  const code = extractCode(text);
-
-  if (!code) return null;
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setIsCopied(true);
-      setTimeout(() => setIsCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy code: ', err);
-    }
-  };
-
-  return (
-    <button 
-      onClick={handleCopy}
-      className="p-1.5 rounded-md text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 flex items-center gap-1.5"
-      title="Copy all code"
-    >
-      {isCopied ? <Icons.Check /> : <Icons.CodeCopy />}
-      <span className="text-[10px] font-medium">Copy Code</span>
-    </button>
-  );
-};
-
-const DownloadButton = ({ url }: { url: string }) => {
-  const handleDownload = async () => {
-    try {
-        // Explicitly set CORS mode to 'cors' and omit credentials to avoid common CORS issues with public APIs
-        const response = await fetch(url, { mode: 'cors', credentials: 'omit' });
-        
-        if (!response.ok) {
-            throw new Error(`Failed to fetch image: ${response.status} ${response.statusText}`);
-        }
-        
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = blobUrl;
-        link.download = `zephyr-image-${Date.now()}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-        console.warn("Direct download failed, falling back to new tab.", e);
-        // Fallback: Open image in new tab if programmatic download fails (e.g. strict CORS)
-        window.open(url, '_blank');
-    }
-  };
-
-  return (
-    <button 
-      onClick={handleDownload}
-      className="p-1.5 rounded-md text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 flex items-center gap-1.5"
-      title="Download Image"
-    >
-      <Icons.Download />
-      <span className="text-[10px] font-medium">Download</span>
-    </button>
-  );
-};
 
 const HistorySidebar = ({ isOpen, onClose, history, onLoadChat, onDeleteChat, onNewChat }: {
     isOpen: boolean;
@@ -223,16 +58,6 @@ const HistorySidebar = ({ isOpen, onClose, history, onLoadChat, onDeleteChat, on
     onDeleteChat: (index: number) => void;
     onNewChat: () => void;
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-
-  const filteredHistory = history
-    .map((chat, index) => ({ chat, index }))
-    .filter(({ chat }) => {
-        const firstUserMsg = chat.find(m => m.role === Role.USER);
-        const title = firstUserMsg?.text || (firstUserMsg?.image ? "Image uploaded" : "New Conversation");
-        return title.toLowerCase().includes(searchTerm.toLowerCase());
-    });
-
   return (
     <>
       <div 
@@ -241,42 +66,24 @@ const HistorySidebar = ({ isOpen, onClose, history, onLoadChat, onDeleteChat, on
         role="dialog"
       >
         <div className="flex flex-col h-full">
-          <div className="p-4 flex justify-between items-center">
+          <div className="p-4 flex justify-between items-center border-b border-zinc-200 dark:border-zinc-800">
             <h2 className="text-lg font-bold text-zinc-800 dark:text-zinc-100">History</h2>
             <button onClick={onClose} className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400" aria-label="Close history">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
           </div>
-
-          <div className="px-4 pb-2">
-              <div className="relative group">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400 group-focus-within:text-blue-500 transition-colors">
-                      <Icons.Search />
-                  </div>
-                  <input 
-                      type="text" 
-                      placeholder="Search..." 
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-zinc-100 dark:bg-zinc-900 border border-transparent focus:border-blue-500/50 rounded-xl text-sm outline-none text-zinc-700 dark:text-zinc-200 placeholder:text-zinc-400 transition-all"
-                  />
-              </div>
-          </div>
-
-          <div className="p-4 pt-2 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="p-4">
              <button onClick={onNewChat} className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 font-medium rounded-xl hover:opacity-90 transition-opacity shadow-lg shadow-zinc-500/10">
                 <Icons.Plus />
                 New Chat
              </button>
           </div>
-          <nav className="flex-1 overflow-y-auto px-2 pt-2">
-            {filteredHistory.length === 0 ? (
-                <div className="text-center text-zinc-400 dark:text-zinc-600 mt-10 text-sm">
-                   {searchTerm ? "No matching chats" : "No recent chats"}
-                </div>
+          <nav className="flex-1 overflow-y-auto px-2">
+            {history.length === 0 ? (
+                <div className="text-center text-zinc-400 dark:text-zinc-600 mt-10 text-sm">No recent chats</div>
             ) : (
                 <ul className="space-y-1">
-                {filteredHistory.map(({ chat, index }) => (
+                {history.map((chat, index) => (
                     <li key={index}>
                     <a href="#" onClick={(e) => { e.preventDefault(); onLoadChat(index); }} className="flex items-center justify-between p-3 rounded-xl hover:bg-zinc-100 dark:hover:bg-zinc-900 group transition-colors">
                         <span className="truncate flex-1 pr-3 text-sm text-zinc-700 dark:text-zinc-300">
@@ -582,9 +389,7 @@ const App = () => {
     }
 
     try {
-        const ai = new GoogleGenAI({
-         apiKey: import.meta.env.GEMINI_API_KEY,
-        });
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
         const historyForAPI = messages.map(msg => {
             const parts: any[] = [{ text: msg.text }];
@@ -764,12 +569,8 @@ const App = () => {
         <div className="max-w-3xl mx-auto space-y-8 pb-4">
           {messages.length === 0 ? (
              <div className="flex flex-col items-center justify-center min-h-[60vh] animate-[fadeIn_0.5s_ease-out]">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-blue-500/20 overflow-hidden">
-                  <img
-                  src="/logo.png"
-                  alt="Zephyr Logo"
-                  className="w-12 h-12 object-contain"
-                   />
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl shadow-blue-500/20">
+                    <span className="text-4xl font-bold">Z</span>
                 </div>
                 <h2 className="text-2xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-zinc-800 to-zinc-500 dark:from-zinc-100 dark:to-zinc-400">
                     How can I help you today?
@@ -843,31 +644,16 @@ const App = () => {
                                 )}
                             </div>
                             
-                            {/* Sources and Actions */}
-                            <div className={`flex items-center gap-2 mt-1 ${msg.role === Role.USER ? 'justify-end' : 'justify-start'} w-full`}>
-                                {msg.sources && msg.sources.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {msg.sources.map((source, i) => (
-                                            <a key={i} href={source.uri} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors border border-zinc-200 dark:border-zinc-700">
-                                                <span className="truncate max-w-[150px]">{source.title}</span>
-                                            </a>
-                                        ))}
-                                    </div>
-                                )}
-                                
-                                {msg.text && (
-                                    <div className="mt-1 flex items-center gap-2">
-                                      <CopyButton text={msg.text} />
-                                      {msg.agentName === 'Coder Agent' && (
-                                        <CopyAgentCodeButton text={msg.text} />
-                                      )}
-                                      {msg.type === 'image' && (
-                                        <DownloadButton url={msg.text} />
-                                      )}
-                                    </div>
-                                )}
-                            </div>
-
+                            {/* Sources */}
+                            {msg.sources && msg.sources.length > 0 && (
+                                <div className="mt-2 ml-1 flex flex-wrap gap-2">
+                                    {msg.sources.map((source, i) => (
+                                        <a key={i} href={source.uri} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-[10px] text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/20 transition-colors border border-zinc-200 dark:border-zinc-700">
+                                            <span className="truncate max-w-[150px]">{source.title}</span>
+                                        </a>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}
