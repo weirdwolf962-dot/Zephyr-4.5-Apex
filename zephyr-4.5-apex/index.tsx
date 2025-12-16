@@ -758,22 +758,13 @@ const App = () => {
       </header>
 
       {/* Chat Area */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
-        <div className="max-w-3xl mx-auto space-y-8 pb-4">
-          {messages.length === 0 ? (
-             <div className="relative flex flex-col items-center justify-center min-h-[60vh] animate-[fadeIn_0.5s_ease-out]">
-                {/* Neon Background Effect */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(59,130,246,0.15)_0%,transparent_70%)] dark:bg-[radial-gradient(circle,rgba(59,130,246,0.1)_0%,transparent_70%)] pointer-events-none -z-10 blur-3xl"></div>
-                
-                {/* Logo */}
-                <div className="mb-8 relative group cursor-default">
-                    <div className="absolute -inset-1 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
-                    <div className="relative w-24 h-24 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl flex items-center justify-center shadow-2xl">
-                         <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600 dark:text-purple-400 drop-shadow-sm">
-                            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                         </svg>
-                    </div>
-                </div>                
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 scroll-smooth">
+              <div className="max-w-3xl mx-auto space-y-8 pb-4">
+                {messages.length === 0 ? (
+                   <div className="flex flex-col items-center justify-center min-h-[60vh] animate-[fadeIn_0.5s_ease-out]">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center text-white mb-6 shadow-xl shadow-blue-500/20">
+                          <span className="text-4xl font-bold">Z</span>
+                      </div>
                 <h2 className="text-2xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-zinc-800 to-zinc-500 dark:from-zinc-100 dark:to-zinc-400">
                     How can I help you today?
                 </h2>
