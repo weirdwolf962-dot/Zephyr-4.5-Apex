@@ -15,6 +15,33 @@ declare global {
   }
 }
 
+// --- Helper Functions ---
+
+// Retry logic for handling transient 503/Overloaded errors
+async function generateContentWithRetry(ai: GoogleGenAI, params: any, maxRetries = 3) {
+  let lastError;
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await ai.models.generateContent(params);
+    } catch (error: any) {
+      lastError = error;
+      const msg = error.message || JSON.stringify(error);
+      // Check for 503, Overloaded, or Unavailable status
+      const isRetryable = msg.includes('503') || msg.toLowerCase().includes('overloaded') || msg.includes('UNAVAILABLE');
+      
+      if (isRetryable && i < maxRetries - 1) {
+        // Exponential backoff: 1s, 2s, 4s...
+        const delay = 1000 * Math.pow(2, i);
+        console.warn(`Attempt ${i + 1} failed (Model Overloaded). Retrying in ${delay}ms...`);
+        await new Promise(r => setTimeout(r, delay));
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError;
+}
+
 // --- Markdown Configuration ---
 if (typeof window !== 'undefined') {
   // Global function to handle code copying from markdown blocks
@@ -642,7 +669,7 @@ const App = () => {
              setProcessingAgent("Zephyr");
         }
 
-        const response = await ai.models.generateContent({
+        const response = await generateContentWithRetry(ai, {
             model: 'gemini-2.5-flash',
             contents: contents,
             config: {
@@ -669,12 +696,29 @@ const App = () => {
         console.error("Error calling Gemini API:", error);
         let errorText = "Sorry, I'm having trouble connecting to the AI service. Please try again later.";
         
-        if (error.message) {
-            if (error.message.includes('API key')) {
-                 errorText = "Error: Invalid API Key. Please check your deployment settings.";
-            } else {
-                 errorText = `Connection Error: ${error.message}`;
+        let rawMessage = error.message || String(error);
+
+        // Attempt to parse JSON error message if it comes as a string
+        try {
+            // Check if it looks like JSON
+            if (rawMessage.trim().startsWith('{')) {
+                const parsed = JSON.parse(rawMessage);
+                if (parsed.error && parsed.error.message) {
+                    rawMessage = parsed.error.message;
+                } else if (parsed.message) {
+                    rawMessage = parsed.message;
+                }
             }
+        } catch (e) {
+            // Parsing failed, use original rawMessage
+        }
+
+        if (rawMessage.includes('API key')) {
+             errorText = "Error: Invalid API Key. Please check your deployment settings.";
+        } else if (rawMessage.includes('503') || rawMessage.toLowerCase().includes('overloaded') || rawMessage.includes('UNAVAILABLE')) {
+             errorText = "The AI service is currently experiencing high traffic (503). Please try again in a moment.";
+        } else {
+             errorText = `Connection Error: ${rawMessage}`;
         }
         
         const errorMessage: Message = { role: Role.MODEL, text: errorText };
