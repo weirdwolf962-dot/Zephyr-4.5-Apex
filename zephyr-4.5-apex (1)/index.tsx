@@ -131,12 +131,42 @@ const Icons = {
 
 const LoadingScreen = () => (
   <div className="bg-white dark:bg-zinc-950 h-screen flex items-center justify-center font-sans overflow-hidden">
-    <div className="loading-container z-10">
-      <div className="logo-text">Zephyr</div>
-      <div className="credit-text flex items-center justify-center gap-2">
-        <span className="by-text text-xs sm:text-sm opacity-70">engineered by</span><span className="company-text text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-bold tracking-wide">Quantum Coders</span>
+    <div className="loading-container z-10 flex flex-col items-center gap-3">
+
+      {/* Thunderbolt Icon */}
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="text-blue-600 dark:text-purple-400 drop-shadow-sm animate-pulse"
+      >
+        <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
+      </svg>
+
+      {/* Logo Text */}
+      <div className="logo-text text-4xl sm:text-5xl font-semibold tracking-wide">
+        Zephyr
       </div>
+
+      {/* Credit */}
+      <div className="credit-text flex items-center justify-center gap-2">
+        <span className="by-text text-xs sm:text-sm opacity-70">
+          engineered by
+        </span>
+        <span className="company-text text-xs sm:text-sm text-zinc-900 dark:text-zinc-100 font-bold tracking-wide">
+          Quantum Coders
+        </span>
+      </div>
+
     </div>
+
+    {/* Background Glow */}
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-100/40 via-transparent to-transparent dark:from-blue-900/10 dark:via-transparent dark:to-transparent pointer-events-none"></div>
   </div>
 );
