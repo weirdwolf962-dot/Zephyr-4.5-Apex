@@ -4,6 +4,7 @@ export enum Role {
 }
 
 export interface Message {
+  id?: string;
   role: Role;
   text: string;
   sources?: { title: string; uri: string }[];
