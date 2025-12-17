@@ -131,7 +131,7 @@ const Icons = {
 
 const LoadingScreen = () => (
   <div className="bg-white dark:bg-zinc-950 h-screen flex items-center justify-center font-sans overflow-hidden">
-    <div className="loading-container z-10 flex flex-col items-center gap-3 animate-fade-in">
+    <div className="loading-container z-11 flex flex-col items-center gap-3 animate-fade-in">
 
       {/* Thunderbolt Icon */}
       <svg
@@ -150,7 +150,7 @@ const LoadingScreen = () => (
       </svg>
 
       {/* Logo Text */}
-      <div className="logo-text text-3xl sm:text-4xl font-semibold tracking-wide">
+      <div className="logo-text text-4xl sm:text-5xl font-semibold tracking-wide">
         Zephyr
       </div>
 
