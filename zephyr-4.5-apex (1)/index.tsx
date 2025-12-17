@@ -25,31 +25,6 @@ declare global {
 
 // --- Helper Functions ---
 
-// Retry logic for handling transient 503/Overloaded errors
-async function generateContentWithRetry(ai: GoogleGenAI, params: any, maxRetries = 3) {
-  let lastError;
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await ai.models.generateContent(params);
-    } catch (error: any) {
-      lastError = error;
-      const msg = error.message || JSON.stringify(error);
-      // Check for 503, Overloaded, or Unavailable status
-      const isRetryable = msg.includes('503') || msg.toLowerCase().includes('overloaded') || msg.includes('UNAVAILABLE');
-      
-      if (isRetryable && i < maxRetries - 1) {
-        // Exponential backoff: 1s, 2s, 4s...
-        const delay = 1000 * Math.pow(2, i);
-        console.warn(`Attempt ${i + 1} failed (Model Overloaded). Retrying in ${delay}ms...`);
-        await new Promise(r => setTimeout(r, delay));
-        continue;
-      }
-      throw error;
-    }
-  }
-  throw lastError;
-}
-
 // --- Markdown Configuration ---
 if (typeof window !== 'undefined') {
   // Global function to handle code copying from markdown blocks
@@ -486,11 +461,9 @@ const App = () => {
   const [helperText, setHelperText] = useState("");
 
   useEffect(() => {
-  const random =
-    helperMessages[Math.floor(Math.random() * helperMessages.length)];
-  setHelperText(random);
+    const random = helperMessages[Math.floor(Math.random() * helperMessages.length)];
+    setHelperText(random);
   }, []);
-
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -505,7 +478,7 @@ const App = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowLoadingScreen(false);
-    }, 2500); // Slightly shorter load
+    }, 2500); 
 
     return () => clearTimeout(timer);
   }, []);
@@ -592,16 +565,15 @@ const App = () => {
     const userMessage: Message = { 
         role: Role.USER, 
         text: messageText.trim(),
-        image: imageAttachment?.url 
+        image: imageAttachment?.url,
+        id: Date.now().toString() + '-user'
     };
 
-    const newMessages = [...messages, userMessage];
-    
-    setMessages(newMessages);
+    // Optimistic UI update
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
     setAttachment(null);
     setLoading(true);
-    // Initially set generic processing, specific agent set after selection
     setProcessingAgent("Zephyr"); 
 
     const lowerCaseInput = messageText.trim().toLowerCase();
@@ -618,9 +590,10 @@ const App = () => {
                     role: Role.MODEL, 
                     text: imageUrl,
                     type: 'image',
-                    agentName: "Creative Agent"
+                    agentName: "Creative Agent",
+                    id: Date.now().toString() + '-model'
                 };
-                setMessages([...newMessages, modelMessage]);
+                setMessages(prev => [...prev, modelMessage]);
                 setLoading(false);
                 setProcessingAgent(null);
             }, 1000);
@@ -628,24 +601,25 @@ const App = () => {
         }
     }
     
+    // Client-side hardcoded responses
     if (!imageAttachment) {
         if (/\b(time|date)\b/.test(lowerCaseInput)) {
             const responseText = `The current date and time is: ${new Date().toLocaleString()}`;
-            setMessages([...newMessages, { role: Role.MODEL, text: responseText }]);
+            setMessages(prev => [...prev, { role: Role.MODEL, text: responseText, id: Date.now().toString() }]);
             setLoading(false);
             setProcessingAgent(null);
             return;
         }
         if (/\b(developed you|your developer|your creator|created you|made you)\b/.test(lowerCaseInput) && !lowerCaseInput.includes("quantum coders")) {
             const responseText = "I was created by **Mohammad Rayyan Ali**.";
-            setMessages([...newMessages, { role: Role.MODEL, text: responseText }]);
+            setMessages(prev => [...prev, { role: Role.MODEL, text: responseText, id: Date.now().toString() }]);
             setLoading(false);
             setProcessingAgent(null);
             return;
         }
         if (/\b(quantum coders)\b/.test(lowerCaseInput)) {
             const responseText = "Quantum Coders is a group for a science exhibition. They created me as their project. The members are:\n1. Rayyan\n2. Amit\n3. Yatin";
-            setMessages([...newMessages, { role: Role.MODEL, text: responseText }]);
+            setMessages(prev => [...prev, { role: Role.MODEL, text: responseText, id: Date.now().toString() }]);
             setLoading(false);
             setProcessingAgent(null);
             return;
@@ -655,30 +629,56 @@ const App = () => {
     // API Key Validation
     const apiKey = process.env.API_KEY;
     if (!apiKey) {
-        const errorMessage: Message = { role: Role.MODEL, text: "Error: API Key is missing. Please check your deployment settings and ensure GEMINI_API_KEY is set." };
-        setMessages([...newMessages, errorMessage]);
+        const errorMessage: Message = { role: Role.MODEL, text: "Error: API Key is missing. Please check your deployment settings and ensure GEMINI_API_KEY is set.", id: 'error' };
+        setMessages(prev => [...prev, errorMessage]);
         setLoading(false);
         setProcessingAgent(null);
         return;
     }
 
+    const placeholderId = Date.now().toString() + '-placeholder';
+
     try {
         const ai = new GoogleGenAI({ apiKey: apiKey });
 
+        // Select Agent
+        const selectedAgent = await selectAgent(messageText);
+        let agentName = "Zephyr";
+        let finalSystemInstruction = "You are Zephyr, a helpful AI assistant created by Quantum Coders. You can provide the current date and time. Your responses should be formatted in Markdown.";
+        
+        if (selectedAgent) {
+            agentName = selectedAgent.name;
+            setProcessingAgent(agentName); 
+            finalSystemInstruction = `${selectedAgent.instructions}\n\nCURRENT AGENT MODE: ${agentName}\nROLE: ${selectedAgent.role}\nDESCRIPTION: ${selectedAgent.description}`;
+        } else {
+             setProcessingAgent("Zephyr");
+        }
+
+        // Add placeholder message for streaming
+        const initialModelMessage: Message = {
+            role: Role.MODEL,
+            text: '',
+            agentName: agentName,
+            id: placeholderId
+        };
+        setMessages(prev => [...prev, initialModelMessage]);
+
         const historyForAPI = messages.map(msg => {
-            const parts: any[] = [{ text: msg.text }];
+            const parts: any[] = [];
+            // Handle image in history
             if (msg.image) {
-                const base64Data = msg.image.split(',')[1];
-                const mimeType = msg.image.split(';')[0].split(':')[1];
-                if (base64Data && mimeType) {
-                    parts.push({
-                        inlineData: {
-                            data: base64Data,
-                            mimeType: mimeType
-                        }
-                    });
-                }
+                // If it's a URL/blob in state, we can't easily resend it to API unless we stored the base64.
+                // The current implementation of `sendMessage` creates the message object. 
+                // However, `messages` state stores `image` as URL usually.
+                // For simplicity in this robust version, we mostly rely on the text context of history
+                // or if the `msg` object has stored inline data. 
+                // The current app doesn't persistently store base64 in `messages` state for history, only for the immediate request.
+                // We will skip sending images from deep history to save bandwidth/complexity, 
+                // or we would need to store base64 in Message interface (which can be heavy for localStorage).
+                // We will send text only for history to keep it fast.
             }
+            parts.push({ text: msg.text });
+            
             return {
                 role: msg.role,
                 parts: parts
@@ -699,42 +699,55 @@ const App = () => {
         }
 
         const contents = [...historyForAPI, { role: Role.USER, parts: currentParts }];
-
-        // Select Agent
-        const selectedAgent = await selectAgent(messageText);
-        let agentName = "Zephyr";
-        let finalSystemInstruction = "You are Zephyr, a helpful AI assistant created by Quantum Coders. You can provide the current date and time. Your responses should be formatted in Markdown.";
         
-        if (selectedAgent) {
-            agentName = selectedAgent.name;
-            setProcessingAgent(agentName); 
-            finalSystemInstruction = `${selectedAgent.instructions}\n\nCURRENT AGENT MODE: ${agentName}\nROLE: ${selectedAgent.role}\nDESCRIPTION: ${selectedAgent.description}`;
-        } else {
-             setProcessingAgent("Zephyr");
-        }
+        // Define thinking budget for complex agents (Science/Coder)
+        // Only if using 2.5 models
+        const thinkingBudget = (agentName === 'Coder Agent' || agentName === 'Science Agent') ? 2048 : undefined;
 
-        const response = await generateContentWithRetry(ai, {
+        const responseStream = await ai.models.generateContentStream({
             model: 'gemini-2.5-flash',
             contents: contents,
             config: {
                 systemInstruction: finalSystemInstruction,
                 tools: [{ googleSearch: {} }],
+                thinkingConfig: thinkingBudget ? { thinkingBudget } : undefined
             },
         });
         
-        const responseText = response.text;
-        const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks ?? [];
-        const sources = groundingChunks
-            .map(chunk => chunk.web)
-            .filter((web): web is { uri: string; title: string; } => !!(web?.uri && web.title));
-        
-        const modelMessage: Message = { 
-            role: Role.MODEL, 
-            text: responseText, 
-            sources: sources.length > 0 ? sources : undefined,
-            agentName: agentName // Store who answered
-        };
-        setMessages([...newMessages, modelMessage]);
+        let fullText = "";
+        let accumulatedSources: {title: string, uri: string}[] = [];
+
+        for await (const chunk of responseStream) {
+            const text = chunk.text;
+            if (text) {
+                fullText += text;
+                setMessages(prev => prev.map(msg => 
+                    msg.id === placeholderId 
+                    ? { ...msg, text: fullText } 
+                    : msg
+                ));
+            }
+            
+            // Check for grounding
+            const groundingChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
+            if (groundingChunks) {
+                const sources = groundingChunks
+                    .map((c: any) => c.web)
+                    .filter((web: any) => !!(web?.uri && web.title));
+                
+                if (sources.length > 0) {
+                     // Deduplicate based on URI
+                     const newSources = sources.filter((s: any) => !accumulatedSources.some(exist => exist.uri === s.uri));
+                     accumulatedSources = [...accumulatedSources, ...newSources];
+                     
+                     setMessages(prev => prev.map(msg => 
+                        msg.id === placeholderId 
+                        ? { ...msg, sources: accumulatedSources } 
+                        : msg
+                    ));
+                }
+            }
+        }
 
     } catch (error: any) {
         console.error("Error calling Gemini API:", error);
@@ -742,9 +755,7 @@ const App = () => {
         
         let rawMessage = error.message || String(error);
 
-        // Attempt to parse JSON error message if it comes as a string
         try {
-            // Check if it looks like JSON
             if (rawMessage.trim().startsWith('{')) {
                 const parsed = JSON.parse(rawMessage);
                 if (parsed.error && parsed.error.message) {
@@ -753,9 +764,7 @@ const App = () => {
                     rawMessage = parsed.message;
                 }
             }
-        } catch (e) {
-            // Parsing failed, use original rawMessage
-        }
+        } catch (e) { }
 
         if (rawMessage.includes('API key')) {
              errorText = "Error: Invalid API Key. Please check your deployment settings.";
@@ -765,8 +774,14 @@ const App = () => {
              errorText = `Connection Error: ${rawMessage}`;
         }
         
-        const errorMessage: Message = { role: Role.MODEL, text: errorText };
-        setMessages([...newMessages, errorMessage]);
+        // Update the placeholder with error text or add new error message if placeholder didn't exist (unlikely)
+        setMessages(prev => {
+             const exists = prev.some(m => m.id === placeholderId);
+             if (exists) {
+                 return prev.map(m => m.id === placeholderId ? { ...m, text: errorText } : m);
+             }
+             return [...prev, { role: Role.MODEL, text: errorText, id: 'error-' + Date.now() }];
+        });
     } finally {
         setLoading(false);
         setProcessingAgent(null);
@@ -817,6 +832,8 @@ const App = () => {
   const renderText = (text: string) => {
     try {
         if (typeof marked !== 'undefined' && marked.parse) {
+            // Configure marked options if needed, but defaults are usually okay
+            // We use the renderer defined globally
             const rawHtml = marked.parse(text);
             return { __html: rawHtml };
         }
@@ -884,13 +901,10 @@ const App = () => {
                 </div>
                 <h2 className="text-2xl font-bold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-zinc-800 to-zinc-500 dark:from-zinc-100 dark:to-zinc-400">
                  How can I help you today?
-                  <p className="text-center text-sm text-zinc-500 dark:text-zinc-400 opacity-0 animate-fade-in">
-                   {helperText}
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
-
                 </h2>
-               
+                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400 opacity-0 animate-fade-in mb-8">
+                   {helperText}
+                </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
                     <SuggestionCard 
@@ -922,7 +936,7 @@ const App = () => {
           ) : (
               <>
                 {messages.map((msg, index) => (
-                    <div key={index} className={`flex gap-4 ${msg.role === Role.USER ? 'flex-row-reverse' : 'flex-row'} group`}>
+                    <div key={msg.id || index} className={`flex gap-4 ${msg.role === Role.USER ? 'flex-row-reverse' : 'flex-row'} group`}>
                         {/* Avatar */}
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                             msg.role === Role.USER 
