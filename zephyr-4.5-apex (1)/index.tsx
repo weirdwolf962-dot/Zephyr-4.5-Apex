@@ -150,7 +150,7 @@ const LoadingScreen = () => (
       </svg>
 
       {/* Logo Text */}
-      <div className="logo-text text-4xl sm:text-5xl font-semibold tracking-wide leading-[1.25]">
+      <div className="logo-text text-4xl sm:text-5xl font-semibold tracking-wide leading-[1.25] pb-1">
        Zephyr
       </div>
 
