@@ -131,7 +131,7 @@ const Icons = {
 
 const LoadingScreen = () => (
   <div className="bg-white dark:bg-zinc-950 h-screen flex items-center justify-center font-sans overflow-hidden">
-    <div className="loading-container z-10 flex flex-col items-center gap-3">
+    <div className="loading-container z-10 flex flex-col items-center gap-3 animate-fade-in">
 
       {/* Thunderbolt Icon */}
       <svg
@@ -144,7 +144,7 @@ const LoadingScreen = () => (
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-blue-600 dark:text-purple-400 drop-shadow-sm animate-pulse"
+        className="text-blue-600 dark:text-purple-400 drop-shadow-sm"
       >
         <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z" />
       </svg>
