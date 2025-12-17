@@ -4,6 +4,14 @@ import { GoogleGenAI } from "@google/genai";
 import { Message, Role } from './types';
 import { selectAgent, generateImageUrl } from './agentManager';
 
+const helperMessages = [
+  "Ask anything — concepts, ideas, or doubts.",
+  "Stuck on something? Let’s break it down.",
+  "Need a clear explanation or example?",
+  "Ready to learn something new today?",
+  "Homework, ideas, or curiosity — I’ve got you.",
+];
+
 // Use marked from CDN
 declare var marked: any;
 
@@ -475,6 +483,14 @@ const App = () => {
   const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [helperText, setHelperText] = useState("");
+
+  useEffect(() => {
+  const random =
+    helperMessages[Math.floor(Math.random() * helperMessages.length)];
+  setHelperText(random);
+  }, []);
+
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -866,9 +882,16 @@ const App = () => {
                          </svg>
                     </div>
                 </div>
-                <h2 className="text-2xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-zinc-800 to-zinc-500 dark:from-zinc-100 dark:to-zinc-400">
-                    How can I help you today?
+                <h2 className="text-2xl font-bold mb-2 text-center bg-clip-text text-transparent bg-gradient-to-r from-zinc-800 to-zinc-500 dark:from-zinc-100 dark:to-zinc-400">
+                 How can I help you today?
+                  <p className="text-center text-sm text-zinc-500 dark:text-zinc-400 opacity-0 animate-fade-in">
+                   {helperText}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+
                 </h2>
+               
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
                     <SuggestionCard 
                         icon={Icons.Newspaper}
