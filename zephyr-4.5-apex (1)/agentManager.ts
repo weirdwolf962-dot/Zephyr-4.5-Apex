@@ -1,3 +1,4 @@
+
 export function generateImageUrl(prompt: string) {
   return `https://pollinations.ai/p/${encodeURIComponent(prompt)}?width=768&height=768`;
 }
@@ -14,7 +15,7 @@ export const agents: Agent[] = [
     name: "News Agent",
     role: "News Reporter",
     description: "Fetches and summarizes latest news using search tools.",
-    instructions: "You are a News Agent. Your primary tool is Google Search. Always search for the latest information on the user's topic. Summarize the results clearly, providing facts, dates, and citing sources. Do not speculate; verify."
+    instructions: "You are a News Agent. Your primary tool is Google Search. Always search for the latest information on the user's topic. Summarize the results clearly, providing facts, dates, and citing sources. Verify all claims."
   },
   {
     name: "Science Agent",
@@ -26,13 +27,13 @@ export const agents: Agent[] = [
     name: "Coder Agent",
     role: "Senior Software Engineer",
     description: "Debugs, explains, and writes code.",
-    instructions: "You are a Coder Agent. Your expertise is in JavaScript, Python, React, and general programming. Specific tasks: 1. Find bugs. 2. Explain the fix. 3. Provide the corrected code. Follow best practices and write clean, commented code."
+    instructions: "You are a Coder Agent. Your expertise is in JavaScript, Python, React, and general programming. Specific tasks: 1. Find bugs. 2. Explain the fix. 3. Provide corrected code. Write clean, commented code."
   },
   {
     name: "Creative Agent",
     role: "Creative Writer",
     description: "Writes stories, poems, and creative content.",
-    instructions: "You are a Creative Agent. Unleash your creativity. Write engaging stories, vivid poems, and imaginative scripts. If requested, write in specific styles or languages (like Hindi)."
+    instructions: "You are a Creative Agent. Unleash your creativity. Write engaging stories, vivid poems, and imaginative scripts. If requested, write in specific styles or languages."
   }
 ];
 
@@ -40,25 +41,24 @@ export async function selectAgent(userMessage: string): Promise<Agent | undefine
   const lowerMsg = userMessage.toLowerCase();
 
   // News keywords
-  if (/\b(news|headline|current|update|latest|search|event|happened|today|yesterday|world)\b/i.test(lowerMsg)) {
+  if (/\b(news|headline|current|update|latest|happened|today|yesterday|world|politics|economy)\b/i.test(lowerMsg)) {
     return agents.find(a => a.name === "News Agent");
   }
 
   // Science keywords
-  if (/\b(math|physics|chemistry|formula|calculate|equation|science|numerical|algebra|calculus|biology|atom|energy)\b/i.test(lowerMsg)) {
+  if (/\b(math|physics|chemistry|formula|calculate|equation|science|numerical|algebra|calculus|biology|atom|energy|space|astronomy)\b/i.test(lowerMsg)) {
     return agents.find(a => a.name === "Science Agent");
   }
 
   // Coder keywords
-  if (/\b(code|debug|python|javascript|react|typescript|error|fix|programming|function|api|variable|compile|script|html|css)\b/i.test(lowerMsg)) {
+  if (/\b(code|debug|python|javascript|react|typescript|error|fix|programming|function|api|variable|compile|script|html|css|json|sql|database)\b/i.test(lowerMsg)) {
     return agents.find(a => a.name === "Coder Agent");
   }
 
   // Creative keywords
-  if (/\b(story|poem|write|tale|fiction|creative|song|haiku|script|novel|lyrics|narrative)\b/i.test(lowerMsg)) {
+  if (/\b(story|poem|write|tale|fiction|creative|song|haiku|script|novel|lyrics|narrative|fantasy|sci-fi)\b/i.test(lowerMsg)) {
     return agents.find(a => a.name === "Creative Agent");
   }
 
-  // Default to undefined (Zephyr)
   return undefined;
 }
