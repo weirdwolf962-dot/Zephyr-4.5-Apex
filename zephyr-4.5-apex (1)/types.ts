@@ -1,4 +1,3 @@
-
 export enum Role {
   USER = 'user',
   MODEL = 'model',
@@ -12,6 +11,4 @@ export interface Message {
   image?: string;
   agentName?: string;
   type?: 'text' | 'image';
-  isLoading?: boolean;
-  audioBuffer?: AudioBuffer; // Cache for processed speech
 }
